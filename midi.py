@@ -25,10 +25,33 @@ class Midi:
                 self.ticks = msg.numerator * 120
         self.messages.append(md.MetaMessage('end_of_track', time=tick))
     
+    def addNotes(self):
+        msg_len = len(self.messages)
+        output_messages = []
+        for i in range(msg_len):
+            msg = self.messages[i]
+            if not msg.is_meta:
+                if msg.type == 'note_on' and msg.time != 0:
+                    output_messages.append(md.Message(
+                        msg.type, channel=msg.channel, note=69, velocity=100, time=0
+                    ))
+                    output_messages.append(md.Message(
+                        "note_off", channel=msg.channel, note=69, velocity=100, time=msg.time
+                    ))
+                    msg.time = 0
+                output_messages.append(msg)
+            else:
+                output_messages.append(msg)
+        return output_messages
+                
+
     def save(self):
         output_midi = md.MidiFile()
         track = md.MidiTrack()
         output_midi.tracks.append(track)
-        for msg in self.messages:
+        messages = self.addNotes()
+        for msg in messages:
+            print(msg)
+        for msg in messages:
             track.append(msg)
         output_midi.save('./generated_midi/new_midi.mid')
